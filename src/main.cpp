@@ -2,8 +2,11 @@
 #include <FastLED.h>
 #include <math.h>
 
-#define NUM_LEDS 9
-#define LED_PIN 9
+#define NUM_LEDS_VERT 9
+#define LED_PIN_VERT 9
+
+#define NUM_LEDS_HORI 18
+#define LED_PIN_HORI 10
 
 int HUE = 0;
 int SAT = 255;
@@ -12,12 +15,16 @@ int VAL = 255;
 bool brightnessIncreasing = true;
 
 float indexInc = 0;
+float horizontalPulse = 0;
+bool incHorizontalPulse = false;
 
-CRGB leds[NUM_LEDS];
+CRGB ledsVert[NUM_LEDS_VERT];
+CRGB ledsHori[NUM_LEDS_HORI];
 
 void setup() {
   Serial.begin(115200);
-  FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, NUM_LEDS);
+  FastLED.addLeds<WS2812B, LED_PIN_VERT, GRB>(ledsVert, NUM_LEDS_VERT);
+  FastLED.addLeds<WS2812B, LED_PIN_HORI, GRB>(ledsHori, NUM_LEDS_HORI);
 }
 
 void loop() {
@@ -37,9 +44,23 @@ void loop() {
   HUE += 1;
 
   indexInc += 0.1;
-  // indexDark = fmod(indexInc,NUM_LEDS);
-  if (indexInc > NUM_LEDS - 1) {
+  // indexDark = fmod(indexInc,NUM_LEDS_VERT);
+  if (indexInc > NUM_LEDS_VERT - 1) {
     indexInc = 0;
+  }
+
+  if (indexInc > NUM_LEDS_VERT - 3) {
+    incHorizontalPulse = true;
+  }
+
+  if (incHorizontalPulse) {
+    horizontalPulse += 1;
+  } else {
+    horizontalPulse -= 1;
+  }
+
+  if (horizontalPulse >= 255) {
+    incHorizontalPulse = false;
   }
   
 
@@ -49,36 +70,32 @@ void loop() {
   Serial.println(indexInc);
 
 
-  for (float i = 0; i < NUM_LEDS; i++) {
+  for (float i = 0; i < NUM_LEDS_VERT; i++) {
     float distFromIndexDark;
     if (i == indexInc) {
       distFromIndexDark = 0;
     } else {
       float distA = abs(i - indexInc);
-      float distB = NUM_LEDS - abs(i - indexInc);
+      float distB = NUM_LEDS_VERT - abs(i - indexInc);
       distFromIndexDark = min(distA, distB);
     }
-    
-    // } else if (i > indexInc) {
-    //   Serial.println("i > indexInc");
-    //   distFromIndexDark = i - indexInc;
-    // } else if (i < indexInc) {
-    //   Serial.println("i < indexInc");
-    //   distFromIndexDark = abs(i - indexInc);
-    // }
 
     long int adjVal = min(pow(distFromIndexDark, log(255)), 255);
     int index = i;
 
     long int adjHue = HUE + (i * 5);
 
-    leds[index].setHSV(adjHue,SAT,adjVal);
+    ledsVert[index].setHSV(adjHue,SAT,adjVal);
+  }
 
-    Serial.print(i);
-    Serial.print(" - distFromIndexDark: ");
-    Serial.print(distFromIndexDark);
-    Serial.print(" - ");
-    Serial.println(adjVal);
+  Serial.print("horizontalPulse: ");
+  Serial.print(horizontalPulse);
+
+  for (int i = 0; i < NUM_LEDS_HORI; i++) {
+
+    long int adjVal = max(horizontalPulse, 0);
+
+    ledsHori[i].setHSV(HUE,SAT,adjVal);
   }
 
   FastLED.show();
