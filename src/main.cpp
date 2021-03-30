@@ -2,7 +2,7 @@
 #include <FastLED.h>
 #include <math.h>
 
-#define NUM_LEDS_VERT 9
+#define NUM_LEDS_VERT 8
 #define LED_PIN_VERT 9
 
 #define NUM_LEDS_HORI 18
@@ -45,7 +45,7 @@ void loop() {
 
   indexInc += 0.1;
   // indexDark = fmod(indexInc,NUM_LEDS_VERT);
-  if (indexInc > NUM_LEDS_VERT - 1) {
+  if (indexInc > NUM_LEDS_VERT) {
     indexInc = 0;
   }
 
@@ -80,7 +80,7 @@ void loop() {
       distFromIndexDark = min(distA, distB);
     }
 
-    long int adjVal = min(pow(distFromIndexDark, log(255)), 255);
+    long int adjVal = 255 - (distFromIndexDark * (255 / (NUM_LEDS_VERT /2 )));
     int index = i;
 
     long int adjHue = HUE + (i * 5);
@@ -99,5 +99,5 @@ void loop() {
   }
 
   FastLED.show();
-  delay(10);
+  delay(25);
 }
